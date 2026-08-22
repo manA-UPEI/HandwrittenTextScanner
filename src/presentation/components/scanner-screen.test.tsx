@@ -1,12 +1,20 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ScannerScreen } from "@/presentation/components/scanner-screen";
+import { CONSENT_STORAGE_KEY } from "@/presentation/hooks/use-consent-gate";
 import type { CapturedImage } from "@/domain/entities/captured-image";
 import type { ScannedDocument } from "@/domain/entities/scanned-document";
 import type { TranscribeImageActionResult } from "@/presentation/actions/transcribe-image.action";
 
 const RAW_TRANSCRIPTION = "Raw transcription text.";
+
+// These tests exercise the scan flow itself, not the first-run consent
+// gate (see consent-gate.test.tsx) — seed consent as already given so
+// the gate never renders here.
+beforeEach(() => {
+  window.localStorage.setItem(CONSENT_STORAGE_KEY, "true");
+});
 
 const buildFakeServices = () => ({
   cropImage: vi.fn(async (source: CapturedImage) => source),

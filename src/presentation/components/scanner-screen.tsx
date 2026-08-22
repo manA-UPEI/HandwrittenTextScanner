@@ -6,10 +6,13 @@ import type {
 } from "@/presentation/actions/transcribe-image.action";
 import { createClientServices } from "@/composition/client-container";
 import { useScanner } from "@/presentation/hooks/use-scanner";
+import { useConsentGate } from "@/presentation/hooks/use-consent-gate";
 import { DebugPanel } from "@/presentation/components/debug-panel"; // TEMPORARY — see debug-log.ts
 import { CaptureStep } from "@/presentation/components/capture-step";
+import { ConsentGate } from "@/presentation/components/consent-gate";
 import { CropStep } from "@/presentation/components/crop-step";
 import { PageList } from "@/presentation/components/page-list";
+import { PrivacyNotice } from "@/presentation/components/privacy-notice";
 import { ReviewStep } from "@/presentation/components/review-step";
 import { Spinner } from "@/presentation/components/ui/spinner";
 import { ErrorBanner } from "@/presentation/components/ui/error-banner";
@@ -29,6 +32,7 @@ interface ScannerScreenProps {
 export const ScannerScreen = ({ transcribe, services }: ScannerScreenProps) => {
   const { state, selectFile, confirmCrop, editText, addAnotherPage, downloadPdf, dismissError } =
     useScanner({ transcribe, services });
+  const { status: consentStatus, accept: acceptConsent } = useConsentGate();
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-4 p-4">
@@ -40,6 +44,7 @@ export const ScannerScreen = ({ transcribe, services }: ScannerScreenProps) => {
         <>
           <CaptureStep onFileSelected={selectFile} />
           {state.pages.length > 0 && <PageList pages={state.pages} />}
+          <PrivacyNotice />
         </>
       )}
 
@@ -60,6 +65,7 @@ export const ScannerScreen = ({ transcribe, services }: ScannerScreenProps) => {
         />
       )}
       <DebugPanel />
+      {consentStatus === "needed" && <ConsentGate onAccept={acceptConsent} />}
     </div>
   );
 };
