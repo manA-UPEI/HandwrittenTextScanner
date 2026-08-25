@@ -1,9 +1,21 @@
 "use server";
 
+import { headers } from "next/headers";
 import { auth } from "@/auth";
 import type { ImageMimeType } from "@/domain/entities/captured-image";
 import { isAppError, type ErrorCode } from "@/domain/errors/app-error";
 import { createServerServices } from "@/composition/server-container";
+
+/**
+ * The platform (Vercel, most other hosts) sets x-forwarded-for on every
+ * request; it's absent only in local dev, where per-IP limiting doesn't
+ * matter anyway. Takes the first hop, since that's the client closest to
+ * the edge — later entries are proxies the request passed through.
+ */
+const resolveClientIp = async (): Promise<string> => {
+  const forwardedFor = (await headers()).get("x-forwarded-for");
+  return forwardedFor?.split(",")[0]?.trim() || "unknown";
+};
 
 export interface TranscribeImageActionInput {
   base64: string;
@@ -39,7 +51,8 @@ export async function transcribeImageAction(
     }
 
     const { transcribeImage } = createServerServices();
-    const result = await transcribeImage(input, session.user.id);
+    const ip = await resolveClientIp();
+    const result = await transcribeImage(input, { userId: session.user.id, ip });
     return { ok: true, text: result.text };
   } catch (error) {
     if (isAppError(error)) {
