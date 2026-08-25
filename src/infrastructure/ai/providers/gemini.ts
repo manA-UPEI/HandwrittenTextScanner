@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmBlockThreshold, HarmCategory } from "@google/genai";
 import type { CapturedImage } from "@/domain/entities/captured-image";
 import type { TranscriptionResult } from "@/domain/entities/transcription-result";
 import type { TranscriptionService } from "@/domain/ports/transcription-service";
@@ -10,6 +10,30 @@ import {
 
 const MODEL = "gemini-2.5-flash";
 
+// A handwritten page transcribes to a few hundred to low thousands of
+// tokens at most. Capping output here means a successful prompt injection
+// (image text asking the model to generate something unrelated) can't turn
+// this endpoint into an unbounded, free-form text generator on our API key.
+const MAX_OUTPUT_TOKENS = 4096;
+
+// Blocks outright harmful output categories, and specifically the
+// JAILBREAK category — Gemini's own classifier for "this prompt is trying
+// to bypass safety instructions" — as a second, model-side layer behind
+// the anti-injection wording in TRANSCRIPTION_SYSTEM_PROMPT.
+const SAFETY_SETTINGS = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  {
+    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  {
+    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+  },
+  { category: HarmCategory.HARM_CATEGORY_JAILBREAK, threshold: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE },
+];
+
 interface GenerateContentParams {
   model: string;
   contents: Array<{
@@ -19,6 +43,8 @@ interface GenerateContentParams {
   config: {
     temperature: number;
     systemInstruction: string;
+    maxOutputTokens: number;
+    safetySettings: Array<{ category: HarmCategory; threshold: HarmBlockThreshold }>;
     abortSignal?: AbortSignal;
   };
 }
@@ -78,6 +104,8 @@ export const makeGeminiTranscriptionService = (
         config: {
           temperature: 0,
           systemInstruction: TRANSCRIPTION_SYSTEM_PROMPT,
+          maxOutputTokens: MAX_OUTPUT_TOKENS,
+          safetySettings: SAFETY_SETTINGS,
           abortSignal: options?.signal,
         },
       })
