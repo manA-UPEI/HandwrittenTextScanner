@@ -2,7 +2,6 @@
 
 import type { ChangeEvent } from "react";
 import { Card } from "@/presentation/components/ui/card";
-import { logDebug } from "@/presentation/debug-log"; // TEMPORARY — see debug-log.ts
 
 interface CaptureStepProps {
   onFileSelected: (file: File) => void;
@@ -30,7 +29,6 @@ const VARIANT_CLASSES = {
  */
 const FileButton = ({ label, ariaLabel, capture, variant, onFileSelected }: FileButtonProps) => {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    logDebug(`onChange fired for "${label}", files.length=${event.target.files?.length ?? 0}`);
     const file = event.target.files?.[0];
     if (file) onFileSelected(file);
     event.target.value = ""; // allow re-selecting the same file later

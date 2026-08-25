@@ -7,7 +7,6 @@ import type {
 import { createClientServices } from "@/composition/client-container";
 import { useScanner } from "@/presentation/hooks/use-scanner";
 import { useConsentGate } from "@/presentation/hooks/use-consent-gate";
-import { DebugPanel } from "@/presentation/components/debug-panel"; // TEMPORARY — see debug-log.ts
 import { CaptureStep } from "@/presentation/components/capture-step";
 import { ConsentGate } from "@/presentation/components/consent-gate";
 import { CropStep } from "@/presentation/components/crop-step";
@@ -64,7 +63,6 @@ export const ScannerScreen = ({ transcribe, services }: ScannerScreenProps) => {
           onDownload={downloadPdf}
         />
       )}
-      <DebugPanel />
       {consentStatus === "needed" && <ConsentGate onAccept={acceptConsent} />}
     </div>
   );
