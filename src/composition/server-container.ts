@@ -1,12 +1,13 @@
 import "server-only";
-import { resolveAiProvider } from "@/infrastructure/config/server-env";
+import { resolveAiProvider, resolveRateLimiterBackend } from "@/infrastructure/config/server-env";
 import { transcriptionProviders } from "@/infrastructure/ai/registry";
-import { makeMemoryRateLimiter } from "@/infrastructure/security/memory-rate-limiter";
+import { rateLimiterBackends } from "@/infrastructure/security/registry";
 import { makeTranscribeImage } from "@/use-cases/transcribe-image";
 
-// A single limiter instance shared across requests to this server process
-// — that's what makes the rate limit actually limit anything.
-const rateLimiter = makeMemoryRateLimiter();
+// A single limiter instance shared across requests to this server process.
+// On the "memory" backend that's what makes the limit hold at all; on
+// "upstash" every instance shares the same Redis-backed counters anyway.
+const rateLimiter = rateLimiterBackends[resolveRateLimiterBackend()]();
 
 /**
  * The only place a concrete TranscriptionService meets the use case.
