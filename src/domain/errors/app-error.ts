@@ -6,6 +6,7 @@
  */
 export type ErrorCode =
   | "INVALID_IMAGE"
+  | "UNAUTHORIZED"
   | "RATE_LIMITED"
   | "TRANSCRIPTION_FAILED"
   | "PDF_FAILED"
