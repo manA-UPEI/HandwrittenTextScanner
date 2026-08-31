@@ -1,7 +1,20 @@
 import { auth, signIn, signOut } from "@/auth";
 import { transcribeImageAction } from "@/presentation/actions/transcribe-image.action";
+import {
+  deleteDocumentAction,
+  listDocumentsAction,
+  loadDocumentAction,
+  saveDocumentAction,
+} from "@/presentation/actions/documents.action";
 import { ScannerScreen } from "@/presentation/components/scanner-screen";
 import { Button } from "@/presentation/components/ui/button";
+
+const documentActions = {
+  save: saveDocumentAction,
+  list: listDocumentsAction,
+  load: loadDocumentAction,
+  remove: deleteDocumentAction,
+};
 
 export default async function Home() {
   const session = await auth();
@@ -40,7 +53,7 @@ export default async function Home() {
           </button>
         </form>
       </div>
-      <ScannerScreen transcribe={transcribeImageAction} />
+      <ScannerScreen transcribe={transcribeImageAction} documentActions={documentActions} />
     </>
   );
 }

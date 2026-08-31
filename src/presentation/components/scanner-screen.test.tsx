@@ -6,6 +6,12 @@ import { CONSENT_STORAGE_KEY } from "@/presentation/hooks/use-consent-gate";
 import type { CapturedImage } from "@/domain/entities/captured-image";
 import type { ScannedDocument } from "@/domain/entities/scanned-document";
 import type { TranscribeImageActionResult } from "@/presentation/actions/transcribe-image.action";
+import type {
+  DeleteDocumentActionResult,
+  ListDocumentsActionResult,
+  LoadDocumentActionResult,
+  SaveDocumentActionResult,
+} from "@/presentation/actions/documents.action";
 
 const RAW_TRANSCRIPTION = "Raw transcription text.";
 
@@ -19,6 +25,15 @@ beforeEach(() => {
 const buildFakeServices = () => ({
   cropImage: vi.fn(async (source: CapturedImage) => source),
   generatePdf: vi.fn<(document: ScannedDocument) => Promise<void>>().mockResolvedValue(undefined),
+});
+
+/** Idle by default (empty list, no-op writes) — tests override individual
+ *  calls when they need to exercise the save/load/delete flow itself. */
+const buildFakeDocumentActions = () => ({
+  save: vi.fn<() => Promise<SaveDocumentActionResult>>(),
+  list: vi.fn<() => Promise<ListDocumentsActionResult>>().mockResolvedValue({ ok: true, data: [] }),
+  load: vi.fn<() => Promise<LoadDocumentActionResult>>(),
+  remove: vi.fn<() => Promise<DeleteDocumentActionResult>>(),
 });
 
 const pngFile = () => new File(["dummy-bytes"], "note.png", { type: "image/png" });
@@ -56,7 +71,13 @@ describe("ScannerScreen (full flow)", () => {
     );
     const services = buildFakeServices();
 
-    render(<ScannerScreen transcribe={transcribe} services={services} />);
+    render(
+      <ScannerScreen
+        transcribe={transcribe}
+        documentActions={buildFakeDocumentActions()}
+        services={services}
+      />,
+    );
 
     // --- page one ---
     let textarea = await scanOnePage();
@@ -98,7 +119,13 @@ describe("ScannerScreen (full flow)", () => {
     );
     const services = buildFakeServices();
 
-    render(<ScannerScreen transcribe={transcribe} services={services} />);
+    render(
+      <ScannerScreen
+        transcribe={transcribe}
+        documentActions={buildFakeDocumentActions()}
+        services={services}
+      />,
+    );
     await scanOnePage().catch(() => {
       // scanOnePage waits for the textarea, which never appears on
       // failure — that rejection is expected here.

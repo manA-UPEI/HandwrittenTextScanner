@@ -4,7 +4,7 @@ import {
   scannerReducer,
   type ScannerState,
 } from "@/presentation/state/scanner-reducer";
-import { fixtureImage } from "@/test/fixtures";
+import { fixtureImage, fixtureSavedDocument } from "@/test/fixtures";
 
 const reviewingState: ScannerState = {
   ...initialScannerState,
@@ -123,6 +123,52 @@ describe("scannerReducer", () => {
     expect(next.status).toBe("reviewing");
     expect(next.error).toBe("disk full");
     expect(next.draftText).toBe(reviewingState.draftText);
+  });
+
+  it("loads a saved document into a fresh idle session", () => {
+    const document = fixtureSavedDocument({ id: "doc-1", title: "Old Notes" });
+
+    const next = scannerReducer(initialScannerState, { type: "DOCUMENT_LOADED", document });
+
+    expect(next.status).toBe("idle");
+    expect(next.title).toBe("Old Notes");
+    expect(next.pages).toEqual(document.pages);
+    expect(next.documentId).toBe("doc-1");
+  });
+
+  it("ignores DOCUMENT_LOADED when the session already has pages", () => {
+    const withPages: ScannerState = {
+      ...initialScannerState,
+      pages: [{ id: "1", text: "kept" }],
+    };
+
+    const next = scannerReducer(withPages, {
+      type: "DOCUMENT_LOADED",
+      document: fixtureSavedDocument(),
+    });
+
+    expect(next).toBe(withPages);
+  });
+
+  it("ignores DOCUMENT_LOADED when not idle", () => {
+    const next = scannerReducer(reviewingState, {
+      type: "DOCUMENT_LOADED",
+      document: fixtureSavedDocument(),
+    });
+    expect(next).toBe(reviewingState);
+  });
+
+  it("records the document id on DOCUMENT_SAVED", () => {
+    const next = scannerReducer(reviewingState, { type: "DOCUMENT_SAVED", id: "doc-2" });
+    expect(next.documentId).toBe("doc-2");
+  });
+
+  it("sets an error on OPERATION_FAILED", () => {
+    const next = scannerReducer(reviewingState, {
+      type: "OPERATION_FAILED",
+      message: "network down",
+    });
+    expect(next.error).toBe("network down");
   });
 
   it("clears the error on ERROR_DISMISSED regardless of status", () => {

@@ -5,6 +5,7 @@ import type { PdfGenerator } from "@/domain/ports/pdf-generator";
 import type { ImageCropper } from "@/domain/ports/image-cropper";
 import type { FileSaver } from "@/domain/ports/file-saver";
 import type { RateLimiter } from "@/domain/ports/rate-limiter";
+import type { DocumentStore, SavedDocument } from "@/domain/ports/document-store";
 import { AppError } from "@/domain/errors/app-error";
 import { SAMPLE_TRANSCRIPTION_TEXT } from "@/test/fixtures";
 
@@ -61,3 +62,51 @@ export const makeFakeFileSaver = (): FileSaver & {
     this.saved.push({ bytes, fileName, mimeType });
   },
 });
+
+/** Keyed by ownerId, then by document id — same scoping real backends must enforce. */
+export const makeFakeDocumentStore = (): DocumentStore & {
+  byOwner: Map<string, Map<string, SavedDocument>>;
+} => {
+  const byOwner = new Map<string, Map<string, SavedDocument>>();
+  let nextId = 1;
+
+  return {
+    byOwner,
+    async save(ownerId, document, id) {
+      const docs = byOwner.get(ownerId) ?? new Map<string, SavedDocument>();
+      byOwner.set(ownerId, docs);
+      const resolvedId = id ?? `fake-doc-${nextId++}`;
+      const saved: SavedDocument = {
+        ...document,
+        id: resolvedId,
+        updatedAt: new Date().toISOString(),
+      };
+      docs.set(resolvedId, saved);
+      return saved;
+    },
+    async list(ownerId) {
+      const docs = byOwner.get(ownerId);
+      if (!docs) return [];
+      return [...docs.values()]
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .map((doc) => ({
+          id: doc.id,
+          title: doc.title,
+          pageCount: doc.pages.length,
+          updatedAt: doc.updatedAt,
+        }));
+    },
+    async load(ownerId, id) {
+      const doc = byOwner.get(ownerId)?.get(id);
+      if (!doc) throw new AppError("NOT_FOUND", "This document could not be found.");
+      return doc;
+    },
+    async remove(ownerId, id) {
+      const docs = byOwner.get(ownerId);
+      if (!docs?.has(id)) {
+        throw new AppError("NOT_FOUND", "This document could not be found.");
+      }
+      docs.delete(id);
+    },
+  };
+};

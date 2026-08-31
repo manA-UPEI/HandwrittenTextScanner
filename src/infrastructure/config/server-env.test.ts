@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { resolveAiProvider, resolveRateLimiterBackend } from "@/infrastructure/config/server-env";
+import {
+  resolveAiProvider,
+  resolveDocumentStoreBackend,
+  resolveRateLimiterBackend,
+} from "@/infrastructure/config/server-env";
 import { isAppError } from "@/domain/errors/app-error";
 
 describe("resolveAiProvider", () => {
@@ -62,6 +66,43 @@ describe("resolveRateLimiterBackend", () => {
     const error = ((): unknown => {
       try {
         resolveRateLimiterBackend();
+        return undefined;
+      } catch (e) {
+        return e;
+      }
+    })();
+
+    expect(isAppError(error)).toBe(true);
+    expect((error as { code: string }).code).toBe("CONFIG_MISSING");
+    expect((error as { message: string }).message).toContain("nonsense");
+    expect((error as { message: string }).message).toContain("memory");
+    expect((error as { message: string }).message).toContain("upstash");
+  });
+});
+
+describe("resolveDocumentStoreBackend", () => {
+  const originalValue = process.env.DOCUMENT_STORE_BACKEND;
+
+  afterEach(() => {
+    process.env.DOCUMENT_STORE_BACKEND = originalValue;
+  });
+
+  it("defaults to memory when DOCUMENT_STORE_BACKEND is unset", () => {
+    delete process.env.DOCUMENT_STORE_BACKEND;
+    expect(resolveDocumentStoreBackend()).toBe("memory");
+  });
+
+  it("accepts a registered backend id", () => {
+    process.env.DOCUMENT_STORE_BACKEND = "upstash";
+    expect(resolveDocumentStoreBackend()).toBe("upstash");
+  });
+
+  it("fails fast with a helpful message for an unregistered backend id", () => {
+    process.env.DOCUMENT_STORE_BACKEND = "nonsense";
+
+    const error = ((): unknown => {
+      try {
+        resolveDocumentStoreBackend();
         return undefined;
       } catch (e) {
         return e;

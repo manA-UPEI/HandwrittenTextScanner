@@ -6,9 +6,15 @@ import {
   type RateLimiterBackendId,
   rateLimiterBackends,
 } from "@/infrastructure/security/registry";
+import {
+  documentStoreBackends,
+  isDocumentStoreBackendId,
+  type DocumentStoreBackendId,
+} from "@/infrastructure/persistence/registry";
 
 const DEFAULT_PROVIDER: ProviderId = "gemini";
 const DEFAULT_RATE_LIMITER_BACKEND: RateLimiterBackendId = "memory";
+const DEFAULT_DOCUMENT_STORE_BACKEND: DocumentStoreBackendId = "memory";
 
 /**
  * Resolves which TranscriptionService provider to use. This is the only
@@ -24,6 +30,27 @@ export const resolveAiProvider = (): ProviderId => {
     throw new AppError(
       "CONFIG_MISSING",
       `AI_PROVIDER="${value}" is not a registered provider. Valid values: ${valid}.`,
+    );
+  }
+
+  return value;
+};
+
+/**
+ * Resolves which DocumentStore backend to use. Defaults to the in-memory
+ * adapter so local dev and tests need no extra setup; production on
+ * serverless must opt in explicitly via DOCUMENT_STORE_BACKEND="upstash"
+ * since that's the only backend whose saved documents survive across
+ * instances and restarts.
+ */
+export const resolveDocumentStoreBackend = (): DocumentStoreBackendId => {
+  const value = process.env.DOCUMENT_STORE_BACKEND?.trim() || DEFAULT_DOCUMENT_STORE_BACKEND;
+
+  if (!isDocumentStoreBackendId(value)) {
+    const valid = Object.keys(documentStoreBackends).join(", ");
+    throw new AppError(
+      "CONFIG_MISSING",
+      `DOCUMENT_STORE_BACKEND="${value}" is not a registered backend. Valid values: ${valid}.`,
     );
   }
 

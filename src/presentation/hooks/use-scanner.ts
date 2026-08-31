@@ -10,13 +10,24 @@ import type {
   TranscribeImageActionInput,
   TranscribeImageActionResult,
 } from "@/presentation/actions/transcribe-image.action";
+import type {
+  LoadDocumentActionResult,
+  SaveDocumentActionResult,
+} from "@/presentation/actions/documents.action";
 
 type TranscribeFn = (input: TranscribeImageActionInput) => Promise<TranscribeImageActionResult>;
+type SaveDocumentFn = (
+  document: { title: string; pages: DocumentPage[] },
+  id?: string,
+) => Promise<SaveDocumentActionResult>;
+type LoadDocumentFn = (id: string) => Promise<LoadDocumentActionResult>;
 
 interface Deps {
   /** Injected rather than imported, so tests can supply a fake — see
    *  scanner-screen.test.tsx — with no module mocking required. */
   transcribe: TranscribeFn;
+  saveDocument: SaveDocumentFn;
+  loadDocument: LoadDocumentFn;
   /** Defaults to the real client-side ports; tests override with fakes. */
   services?: ReturnType<typeof createClientServices>;
 }
@@ -51,7 +62,12 @@ const errorMessage = (error: unknown, fallback: string): string => {
  * ports via createClientServices, and exposes intent-named callbacks so
  * components never see a raw dispatch or a setter — no prop drilling.
  */
-export const useScanner = ({ transcribe, services: servicesOverride }: Deps) => {
+export const useScanner = ({
+  transcribe,
+  saveDocument,
+  loadDocument,
+  services: servicesOverride,
+}: Deps) => {
   const [state, dispatch] = useReducer(scannerReducer, initialScannerState);
   const services = useMemo(() => servicesOverride ?? createClientServices(), [servicesOverride]);
 
@@ -114,7 +130,7 @@ export const useScanner = ({ transcribe, services: servicesOverride }: Deps) => 
         ? [{ id: crypto.randomUUID(), text: state.draftText }]
         : [];
       await services.generatePdf(
-        { title: "Scanned Document", pages: [...state.pages, ...draftPage] },
+        { title: state.title, pages: [...state.pages, ...draftPage] },
         presentationWindow,
       );
       dispatch({ type: "EXPORT_SUCCEEDED" });
@@ -125,9 +141,63 @@ export const useScanner = ({ transcribe, services: servicesOverride }: Deps) => 
         message: errorMessage(error, "Could not generate the PDF."),
       });
     }
-  }, [services, state.draftText, state.pages]);
+  }, [services, state.title, state.draftText, state.pages]);
+
+  const saveCurrentDocument = useCallback(async () => {
+    const draftPage: DocumentPage[] = state.draftText.trim()
+      ? [{ id: crypto.randomUUID(), text: state.draftText }]
+      : [];
+    const pages = [...state.pages, ...draftPage];
+    if (pages.length === 0) return;
+
+    try {
+      const result = await saveDocument(
+        { title: state.title, pages },
+        state.documentId ?? undefined,
+      );
+      if (!result.ok) {
+        dispatch({ type: "OPERATION_FAILED", message: result.message });
+        return;
+      }
+      dispatch({ type: "DOCUMENT_SAVED", id: result.data.id });
+    } catch (error) {
+      dispatch({
+        type: "OPERATION_FAILED",
+        message: errorMessage(error, "Could not save this scan."),
+      });
+    }
+  }, [saveDocument, state.title, state.draftText, state.pages, state.documentId]);
+
+  const openDocument = useCallback(
+    async (id: string) => {
+      try {
+        const result = await loadDocument(id);
+        if (!result.ok) {
+          dispatch({ type: "OPERATION_FAILED", message: result.message });
+          return;
+        }
+        dispatch({ type: "DOCUMENT_LOADED", document: result.data });
+      } catch (error) {
+        dispatch({
+          type: "OPERATION_FAILED",
+          message: errorMessage(error, "Could not open this scan."),
+        });
+      }
+    },
+    [loadDocument],
+  );
 
   const dismissError = useCallback(() => dispatch({ type: "ERROR_DISMISSED" }), []);
 
-  return { state, selectFile, confirmCrop, editText, addAnotherPage, downloadPdf, dismissError };
+  return {
+    state,
+    selectFile,
+    confirmCrop,
+    editText,
+    addAnotherPage,
+    downloadPdf,
+    saveCurrentDocument,
+    openDocument,
+    dismissError,
+  };
 };

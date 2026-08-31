@@ -12,6 +12,7 @@ interface ReviewStepProps {
   onTextChange: (text: string) => void;
   onAddPage: () => void;
   onDownload: () => void;
+  onSave: () => void;
 }
 
 /** Lets the user correct the transcription before it's added to the PDF. */
@@ -22,6 +23,7 @@ export const ReviewStep = ({
   onTextChange,
   onAddPage,
   onDownload,
+  onSave,
 }: ReviewStepProps) => (
   <div className="flex flex-col gap-4">
     <Card>
@@ -42,6 +44,9 @@ export const ReviewStep = ({
     <div className="flex flex-col gap-3 sm:flex-row">
       <Button variant="secondary" onClick={onAddPage} className="flex-1">
         Add Another Page
+      </Button>
+      <Button variant="secondary" onClick={onSave} className="flex-1">
+        Save Progress
       </Button>
       <Button onClick={onDownload} disabled={isExporting} className="flex-1">
         {isExporting ? "Generating PDF…" : "Download PDF"}
