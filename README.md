@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Handwriting Scanner
 
-## Getting Started
+Scan handwritten pages with your phone or webcam, transcribe them with Gemini, review/edit the text, and export the pages as a PDF. Signed-in users can also save a scan session and come back to it later.
 
-First, run the development server:
+Built as a Next.js App Router project following Clean Architecture: domain entities/ports, use cases, infrastructure adapters, and presentation are kept in separate layers under `src/`, wired together in `src/composition/`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Getting started
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Install dependencies:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. Copy the example env file and fill in what you need:
 
-## Learn More
+   ```bash
+   cp .env.local.example .env.local
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+   The defaults (`AI_PROVIDER=mock`, `DOCUMENT_STORE_BACKEND=memory`, `RATE_LIMIT_BACKEND=memory`) run entirely offline with no API keys. To use the real Gemini provider, Upstash Redis, or Google sign-in, fill in the corresponding variables — see the comments in `.env.local.example` for what each one does.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Run the dev server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+   Open [http://localhost:3000](http://localhost:3000).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm start` | Run a production build |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Generate Next.js route types, then `tsc --noEmit` |
+| `npm test` | Unit/contract tests (Vitest) |
+| `npm run test:watch` | Vitest in watch mode |
+| `npm run test:e2e` | End-to-end tests (Playwright) — runs against a dev server with `AI_PROVIDER=mock` and in-memory backends, so it makes no external calls |
+
+## Architecture
+
+- `src/domain/` — entities, ports (interfaces), and error types. No framework or infrastructure code.
+- `src/use-cases/` — application logic, depending only on domain ports.
+- `src/infrastructure/` — concrete adapters (Gemini, pdf-lib, Upstash Redis, in-memory stores) implementing those ports. Swappable backends (AI provider, rate limiter, document store) are selected at runtime via env vars through a registry file per concern.
+- `src/presentation/` — React components, hooks, and Server Actions.
+- `src/composition/` — the only place concrete adapters meet the use cases they're injected into.
+
+## Deploying
+
+See the [Next.js deployment docs](https://nextjs.org/docs/app/building-your-application/deploying). If deploying to a serverless platform (e.g. Vercel), set `RATE_LIMIT_BACKEND=upstash` and `DOCUMENT_STORE_BACKEND=upstash` with real Upstash Redis credentials — the in-memory backends don't share state across instances or survive a restart.
