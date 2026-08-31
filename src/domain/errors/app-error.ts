@@ -10,7 +10,9 @@ export type ErrorCode =
   | "RATE_LIMITED"
   | "TRANSCRIPTION_FAILED"
   | "PDF_FAILED"
-  | "CONFIG_MISSING";
+  | "CONFIG_MISSING"
+  | "NOT_FOUND"
+  | "UNEXPECTED";
 
 /**
  * The only error type allowed to cross a layer boundary or the

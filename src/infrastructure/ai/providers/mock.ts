@@ -1,7 +1,8 @@
 import type { TranscriptionService } from "@/domain/ports/transcription-service";
 import { AppError } from "@/domain/errors/app-error";
 
-const MOCK_TRANSCRIPTION_TEXT = [
+/** Exported so e2e tests can assert against it without duplicating the literal. */
+export const MOCK_TRANSCRIPTION_TEXT = [
   "This is a mock transcription.",
   "",
   "Set AI_PROVIDER=gemini and GEMINI_API_KEY in .env.local",
