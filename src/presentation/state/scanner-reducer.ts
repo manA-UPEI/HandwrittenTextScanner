@@ -1,23 +1,31 @@
 import type { CapturedImage } from "@/domain/entities/captured-image";
 import type { DocumentPage } from "@/domain/entities/scanned-document";
+import type { SavedDocument } from "@/domain/ports/document-store";
 
 export type ScannerStatus = "idle" | "cropping" | "transcribing" | "reviewing" | "exporting";
 
 export interface ScannerState {
   status: ScannerStatus;
+  title: string;
   pages: DocumentPage[];
   /** The image currently being cropped or transcribed, if any. */
   pendingImage: CapturedImage | null;
   /** Editable transcription text while status is "reviewing". */
   draftText: string;
+  /** Id of the saved document this session corresponds to, if any — set
+   *  after the first save (or on load) so later saves update it in place
+   *  instead of creating a duplicate. */
+  documentId: string | null;
   error: string | null;
 }
 
 export const initialScannerState: ScannerState = {
   status: "idle",
+  title: "Scanned Document",
   pages: [],
   pendingImage: null,
   draftText: "",
+  documentId: null,
   error: null,
 };
 
@@ -31,6 +39,9 @@ export type ScannerAction =
   | { type: "EXPORT_STARTED" }
   | { type: "EXPORT_SUCCEEDED" }
   | { type: "EXPORT_FAILED"; message: string }
+  | { type: "DOCUMENT_LOADED"; document: SavedDocument }
+  | { type: "DOCUMENT_SAVED"; id: string }
+  | { type: "OPERATION_FAILED"; message: string }
   | { type: "ERROR_DISMISSED" };
 
 /**
@@ -94,6 +105,29 @@ export const scannerReducer = (state: ScannerState, action: ScannerAction): Scan
     case "EXPORT_FAILED":
       if (state.status !== "exporting") return state;
       return { ...state, status: "reviewing", error: action.message };
+
+    case "DOCUMENT_LOADED":
+      // Only from a genuinely fresh session, so opening a saved document
+      // never silently discards in-progress unsaved work.
+      if (state.status !== "idle" || state.pages.length > 0 || state.draftText !== "") {
+        return state;
+      }
+      return {
+        ...initialScannerState,
+        title: action.document.title,
+        pages: action.document.pages,
+        documentId: action.document.id,
+      };
+
+    case "DOCUMENT_SAVED":
+      if (state.status !== "idle" && state.status !== "reviewing") return state;
+      return { ...state, documentId: action.id, error: null };
+
+    case "OPERATION_FAILED":
+      // Covers a failed save or a failed document load — both happen from
+      // idle or reviewing and only need to surface an error in place.
+      if (state.status !== "idle" && state.status !== "reviewing") return state;
+      return { ...state, error: action.message };
 
     case "ERROR_DISMISSED":
       return { ...state, error: null };
