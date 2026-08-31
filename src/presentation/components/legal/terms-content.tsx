@@ -37,9 +37,9 @@ const SECTIONS = [
     ],
   },
   {
-    heading: "6. No Account, No Storage",
+    heading: "6. Accounts and Saved Scans",
     paragraphs: [
-      "The Service doesn't require an account and doesn't store your photos or transcribed text on our servers. See our Privacy Policy for full details.",
+      "Using the Service requires signing in with a Google account. Your photos are never stored on our servers. Transcribing a page doesn't store anything either — only if you explicitly save a scan is its transcribed text stored on our server, tied to your account, until you delete it or delete your account. See our Privacy Policy for full details.",
     ],
   },
   {
