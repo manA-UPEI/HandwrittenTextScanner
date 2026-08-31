@@ -24,7 +24,7 @@ export default async function Home() {
       <div className="mx-auto flex max-w-lg flex-col items-center gap-4 p-8 text-center">
         <h1 className="text-xl font-semibold text-slate-900">Handwriting Scanner</h1>
         <p className="text-sm text-slate-600">
-          Sign in to scan handwritten pages and export them as a PDF.
+          Sign in to scan handwritten pages, save your progress, and export them as a PDF.
         </p>
         <form
           action={async () => {

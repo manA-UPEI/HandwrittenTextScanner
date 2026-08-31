@@ -1,7 +1,7 @@
 /** Shared with ConsentGate so the two never drift apart on wording. */
 export const PRIVACY_POINTS = [
   "Your photo is sent to Google's Gemini AI so it can read the handwriting. On this app's current setup, Google may also use it to improve their own AI models.",
-  "Nothing is saved on our end: no accounts, no database, no copy of your photo or text kept anywhere.",
+  "You sign in with your Google account. Your photo itself is never stored on our servers — but if you choose to save a scan, its transcribed text is stored on our server under your account until you delete it.",
   "Location and other hidden photo data are stripped out automatically before anything is sent.",
   "The finished PDF is created on your device and stays there — it's never uploaded.",
 ];

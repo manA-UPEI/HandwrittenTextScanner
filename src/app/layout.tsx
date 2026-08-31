@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Handwriting Scanner",
-  description: "Scan handwritten pages, transcribe them, and export a clean PDF.",
+  description: "Scan handwritten pages, transcribe them, save your progress, and export a clean PDF.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

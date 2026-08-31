@@ -10,20 +10,21 @@ const SECTIONS = [
   {
     heading: "2. What We Collect",
     list: [
-      "The photo you capture or upload — held only long enough to process your transcription request.",
-      "The resulting transcribed text — held only long enough to show it back to you.",
-      "A technical identifier derived from your network address, used briefly to prevent abuse (rate limiting). It isn't linked to any account, since none exists.",
+      "Your Google account's email address and account id, used to sign you in and to identify which saved scans belong to you.",
+      "The photo you capture or upload — held only long enough to process your transcription request, then discarded. It is never written to our servers.",
+      "The resulting transcribed text — shown back to you, and additionally stored on our server, tied to your account, only for scans you explicitly choose to save.",
+      "A technical identifier derived from your network address, used briefly to prevent abuse (rate limiting).",
     ],
     paragraphs: [
-      "We do not collect your name, email, or any account information — there is no account system.",
+      "We do not collect any personal information beyond what your Google account provides for sign-in.",
     ],
   },
   {
     heading: "3. What We Don't Do",
     list: [
-      "We do not store your photos or transcriptions on our servers.",
+      "We do not store your photos on our servers, ever — only the transcribed text of scans you explicitly save.",
       "We do not use tracking or advertising cookies.",
-      "We do not sell or share your data with anyone besides the AI provider described below, which is required to provide the transcription feature itself.",
+      "We do not sell or share your data with anyone besides the providers required to operate the Service: Google (for sign-in and transcription, described below) and our hosting/database providers.",
     ],
   },
   {
@@ -45,7 +46,7 @@ const SECTIONS = [
   {
     heading: "6. Data Retention",
     paragraphs: [
-      "We retain nothing after your session ends — there is no database. Your photo and transcribed text exist only in your browser's memory and, briefly, in the request sent to Google's API. The finished PDF is generated in your browser and is never uploaded anywhere.",
+      "Your photo exists only in your browser's memory and, briefly, in the request sent to Google's API — it is never written to our servers. Transcribed text is likewise ephemeral unless you explicitly save a scan, in which case it's stored on our server, tied to your account, until you delete it from \"My Scans\" or delete your account. The finished PDF is generated in your browser and is never uploaded anywhere.",
     ],
   },
   {
@@ -57,13 +58,13 @@ const SECTIONS = [
   {
     heading: "8. Your Rights",
     paragraphs: [
-      "Because we don't store any data, there's generally nothing on our end to delete, correct, or export on your behalf. For anything Google retains as described in Section 4, your rights are governed by Google's own policies and applicable law (e.g. GDPR, CCPA) — contact Google directly for requests relating to their processing.",
+      "You can delete any saved scan yourself, at any time, from \"My Scans\" — this removes it from our server immediately and permanently. To request deletion of your account data entirely, or for anything Google retains as described in Section 4, contact us at [your contact email], or Google directly for requests relating to their own processing.",
     ],
   },
   {
     heading: "9. Security",
     paragraphs: [
-      "Data in transit is encrypted (HTTPS). Because we don't store data at rest, there's no database on our end that could be breached.",
+      "Data in transit is encrypted (HTTPS). Saved scans are stored under your account id, scoped so one account can never read or delete another's saved scans.",
     ],
   },
   {
